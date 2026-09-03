@@ -5,10 +5,12 @@ import {
   PromptInput,
   PromptInputButton,
   PromptInputFooter,
+  PromptInputProvider,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputAttachments,
+  usePromptInputController,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import {
@@ -97,9 +99,37 @@ function ModelSelector() {
   );
 }
 
-export function Composer({ onSend, autoFocus, className }: Props) {
+function SubmitOrStop() {
   const status = useChatStore((s) => s.status);
   const stop = useChatStore((s) => s.stopStreaming);
+  const { textInput } = usePromptInputController();
+  const empty = textInput.value.trim().length === 0;
+
+  if (status !== "ready") {
+    return (
+      <PromptInputSubmit
+        status="streaming"
+        onStop={stop}
+        tooltip="Stop generating"
+        className="size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+      >
+        <Square className="size-3.5 fill-current" />
+      </PromptInputSubmit>
+    );
+  }
+  return (
+    <PromptInputSubmit
+      disabled={empty}
+      tooltip="Send"
+      className="size-8 rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+    >
+      <ArrowUp className="size-4" />
+    </PromptInputSubmit>
+  );
+}
+
+export function Composer({ onSend, autoFocus, className }: Props) {
+  const status = useChatStore((s) => s.status);
   const busy = status !== "ready";
 
   const handleSubmit = useCallback(
@@ -117,77 +147,31 @@ export function Composer({ onSend, autoFocus, className }: Props) {
 
   return (
     <div className={cn("w-full", className)}>
-      <PromptInput
-        onSubmit={handleSubmit}
-        multiple
-        maxFiles={5}
-        className="rounded-2xl border-border bg-card shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--foreground)_25%,transparent)] transition-colors focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/30"
-      >
-        <AttachmentChips />
-        <PromptInputTextarea
-          autoFocus={autoFocus}
-          placeholder="Message Nova…"
-          className="max-h-52 min-h-[52px] field-sizing-content px-4 text-[15px] leading-relaxed placeholder:text-muted-foreground/70"
-        />
-        <PromptInputFooter className="px-2 pb-2">
-          <PromptInputTools>
-            <AttachButton />
-            <ModelSelector />
-          </PromptInputTools>
-          {busy ? (
-            <PromptInputSubmit
-              status="streaming"
-              onStop={stop}
-              className="size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
-            >
-              <Square className="size-3.5 fill-current" />
-            </PromptInputSubmit>
-          ) : (
-            <SubmitButton />
-          )}
-        </PromptInputFooter>
-      </PromptInput>
+      <PromptInputProvider>
+        <PromptInput
+          onSubmit={handleSubmit}
+          multiple
+          maxFiles={5}
+          className="rounded-2xl border-border bg-card shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--foreground)_25%,transparent)] transition-colors focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/30"
+        >
+          <AttachmentChips />
+          <PromptInputTextarea
+            autoFocus={autoFocus}
+            placeholder="Message Nova…"
+            className="max-h-52 min-h-[52px] field-sizing-content px-4 text-[15px] leading-relaxed placeholder:text-muted-foreground/70"
+          />
+          <PromptInputFooter className="px-2 pb-2">
+            <PromptInputTools>
+              <AttachButton />
+              <ModelSelector />
+            </PromptInputTools>
+            <SubmitOrStop />
+          </PromptInputFooter>
+        </PromptInput>
+      </PromptInputProvider>
       <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
         Nova can make mistakes. Check important information.
       </p>
     </div>
   );
-}
-
-function SubmitButton() {
-  const { textInput } = useOptionalInput();
-  const empty = textInput.trim().length === 0;
-  return (
-    <PromptInputSubmit
-      disabled={empty}
-      className="size-8 rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground"
-    >
-      <ArrowUp className="size-4" />
-    </PromptInputSubmit>
-  );
-}
-
-// PromptInput manages its own textarea value internally; we watch the form's
-// textarea to toggle the send button without re-implementing the input.
-import { useEffect, useRef, useState } from "react";
-
-function useOptionalInput() {
-  const [textInput, setTextInput] = useState("");
-  const ref = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const form = ref.current?.closest("form") ?? document.querySelector("form[data-composer]");
-    const ta = form?.querySelector("textarea");
-    if (!ta) return;
-    const update = () => setTextInput(ta.value);
-    update();
-    ta.addEventListener("input", update);
-    const obs = new MutationObserver(update);
-    obs.observe(ta, { attributes: false, childList: true, characterData: true, subtree: true });
-    form?.addEventListener("submit", () => setTimeout(update, 0));
-    return () => {
-      ta.removeEventListener("input", update);
-      obs.disconnect();
-    };
-  }, []);
-  return { textInput, ref };
 }
