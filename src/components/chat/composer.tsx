@@ -110,7 +110,6 @@ function SubmitOrStop() {
       <PromptInputSubmit
         status="streaming"
         onStop={stop}
-        tooltip="Stop generating"
         className="size-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
       >
         <Square className="size-3.5 fill-current" />
@@ -120,7 +119,6 @@ function SubmitOrStop() {
   return (
     <PromptInputSubmit
       disabled={empty}
-      tooltip="Send"
       className="size-8 rounded-lg bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
     >
       <ArrowUp className="size-4" />
