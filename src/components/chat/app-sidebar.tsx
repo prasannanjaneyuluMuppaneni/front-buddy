@@ -73,11 +73,11 @@ function groupChats(chats: Chat[], now: number) {
   };
   for (const c of chats) {
     const t = c.updatedAt;
-    if (t >= startOfToday) buckets.Today!.push(c);
-    else if (t >= startOfToday - day) buckets.Yesterday!.push(c);
+    if (t >= startOfToday) buckets["Today"]!.push(c);
+    else if (t >= startOfToday - day) buckets["Yesterday"]!.push(c);
     else if (t >= startOfToday - 7 * day) buckets["Previous 7 days"]!.push(c);
     else if (t >= startOfToday - 30 * day) buckets["Previous 30 days"]!.push(c);
-    else buckets.Older!.push(c);
+    else buckets["Older"]!.push(c);
   }
   return Object.entries(buckets).filter(([, v]) => v.length > 0);
 }

@@ -1,7 +1,7 @@
 // Isolated mock reply generator. Swap `generateReply` for a real /api/chat
 // stream later without touching the UI.
 
-const pick = <T,>(arr: T[], seed: number) => arr[seed % arr.length];
+const pick = (arr: string[], seed: number): string => arr[seed % arr.length] ?? "";
 
 const hashString = (s: string) => {
   let h = 0;

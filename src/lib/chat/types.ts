@@ -8,7 +8,7 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
   feedback?: Feedback;
-  attachments?: { name: string; size: number }[];
+  attachments?: { name: string; size: number }[] | undefined;
 }
 
 export interface Chat {
